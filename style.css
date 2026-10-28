@@ -1,0 +1,157 @@
+/* ===== Цвета: светлая тема по умолчанию, тёмная — по настройке системы ===== */
+:root {
+  --bg: #f2f2f7;          /* фон как в настройках iOS */
+  --card: #ffffff;
+  --text: #1c1c1e;
+  --muted: #8e8e93;
+  --line: #e5e5ea;
+  --accent: #007aff;      /* системный синий iOS */
+  --today: #ff3b30;       /* красный кружок «сегодня», как в Календаре */
+  --entry: #e8f1ff;
+  --radius: 14px;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --card: #1c1c1e;
+    --text: #f2f2f7;
+    --muted: #8e8e93;
+    --line: #38383a;
+    --accent: #0a84ff;
+    --today: #ff453a;
+    --entry: #0f2a4d;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== Шапка ===== */
+.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.eyebrow { margin: 0; color: var(--today); font-weight: 600; font-size: 15px; }
+h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+.nav { display: flex; align-items: center; gap: 4px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; font-size: 26px; color: var(--accent); line-height: 1; }
+.icon-btn:active { background: var(--line); }
+.text-btn { color: var(--accent); font-size: 17px; padding: 6px 8px; }
+.text-btn.bold { font-weight: 600; }
+
+/* ===== Счётчики ===== */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.stat-num { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 13px; color: var(--muted); }
+
+/* ===== Календарь ===== */
+.card { background: var(--card); border-radius: var(--radius); }
+.calendar { padding: 12px; }
+.weekdays, .grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.weekdays span {
+  text-align: center; font-size: 12px; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; padding-bottom: 8px;
+}
+.day {
+  aspect-ratio: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border-radius: 12px;
+  font-size: 17px;
+  transition: background 0.15s;
+}
+.day:active { background: var(--line); }
+.day .num {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.day .mark { font-size: 11px; line-height: 1; height: 12px; }
+.day.has-entry { background: var(--entry); }
+.day.today .num { background: var(--today); color: #fff; font-weight: 600; }
+.day.future { color: var(--muted); opacity: 0.45; cursor: default; }
+
+/* ===== Список последних записей ===== */
+.recent h2 { margin: 0 0 8px 16px; font-size: 13px; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+.list { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+.list li + li { border-top: 1px solid var(--line); }
+.list button {
+  width: 100%; text-align: left;
+  display: flex; gap: 12px; align-items: center;
+  padding: 12px 16px;
+}
+.list button:active { background: var(--line); }
+.list .mood { font-size: 24px; }
+.list .body { min-width: 0; flex: 1; }
+.list .date { font-size: 15px; font-weight: 600; }
+.list .preview { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list .empty { padding: 16px; color: var(--muted); font-size: 15px; }
+
+/* ===== Нижняя панель ===== */
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  max-width: 480px; margin: 0 auto;
+  background: var(--card);
+  border-radius: 14px 14px 0 0;
+  padding: 8px 16px calc(24px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 12px;
+  transform: translateY(105%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.backdrop.open { opacity: 1; pointer-events: auto; }
+.sheet.open { transform: translateY(0); }
+
+.grabber { width: 36px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 4px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-head h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.sheet-label { margin: 0; font-size: 13px; color: var(--muted); text-transform: uppercase; }
+
+.moods { display: flex; justify-content: space-between; gap: 8px; }
+.moods button {
+  flex: 1; font-size: 28px; padding: 8px 0;
+  border-radius: 12px; background: var(--bg);
+  transition: transform 0.15s, background 0.15s;
+}
+.moods button.active { background: var(--entry); outline: 2px solid var(--accent); transform: scale(1.05); }
+
+textarea {
+  width: 100%; min-height: 160px; resize: vertical;
+  border: 0; border-radius: 12px;
+  background: var(--bg); color: var(--text);
+  padding: 12px; font: 17px/1.4 var(--font);
+}
+.delete-btn { color: var(--today); font-size: 17px; padding: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
