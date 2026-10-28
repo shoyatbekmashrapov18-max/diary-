@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <title>Мой дневник</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -15,30 +17,31 @@
         <h1 id="monthLabel"></h1>
       </div>
       <div class="nav">
-        <button class="icon-btn" id="prevBtn" aria-label="Предыдущий месяц">‹</button>
-        <button class="text-btn" id="todayBtn">Сегодня</button>
-        <button class="icon-btn" id="nextBtn" aria-label="Следующий месяц">›</button>
+        <button class="icon-btn tap" id="prevBtn" aria-label="Предыдущий месяц">‹</button>
+        <button class="text-btn tap" id="todayBtn">Сегодня</button>
+        <button class="icon-btn tap" id="nextBtn" aria-label="Следующий месяц">›</button>
       </div>
     </header>
 
     <!-- Счётчики -->
     <section class="stats">
-      <div class="stat">
-        <span class="stat-num" id="streakNum">0</span>
+      <div class="stat tap" id="streakCard">
+        <span class="stat-num"><span id="streakNum">0</span> <span class="fire">🔥</span></span>
         <span class="stat-label">дней подряд</span>
       </div>
-      <div class="stat">
+      <div class="stat tap">
         <span class="stat-num" id="monthNum">0</span>
         <span class="stat-label">записей в этом месяце</span>
       </div>
     </section>
 
     <!-- Календарь -->
-    <section class="card calendar">
+    <section class="card calendar" id="calendar">
       <div class="weekdays">
         <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
       </div>
       <div class="grid" id="grid"></div>
+      <p class="hint">Смахните влево или вправо, чтобы сменить месяц</p>
     </section>
 
     <!-- Последние записи -->
@@ -51,17 +54,20 @@
   <!-- Нижняя панель (как sheet в iOS) для записи дня -->
   <div class="backdrop" id="backdrop"></div>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-    <div class="grabber"></div>
+    <div class="drag-zone" id="dragZone"><div class="grabber"></div></div>
     <header class="sheet-head">
-      <button class="text-btn" id="cancelBtn">Отмена</button>
+      <button class="text-btn tap" id="cancelBtn">Отмена</button>
       <h3 id="sheetTitle"></h3>
-      <button class="text-btn bold" id="saveBtn">Готово</button>
+      <button class="text-btn bold tap" id="saveBtn">Готово</button>
     </header>
     <p class="sheet-label">Настроение</p>
     <div class="moods" id="moods"></div>
     <textarea id="entryText" placeholder="Что сегодня было?"></textarea>
-    <button class="delete-btn" id="deleteBtn">Удалить запись</button>
+    <button class="delete-btn tap" id="deleteBtn">Удалить запись</button>
   </div>
+
+  <!-- Уведомление -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="app.js"></script>
 </body>

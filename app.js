@@ -14,6 +14,9 @@ const backdrop = $('backdrop');
 const entryText = $('entryText');
 const moodsBox = $('moods');
 
+// Без этой строки iOS Safari не показывает :active-анимацию при касании
+document.addEventListener('touchstart', () => {}, { passive: true });
+
 // ===== Состояние =====
 // entries = { "2026-10-27": { text: "...", mood: 3, updatedAt: 1730000000000 } }
 let entries = load();
@@ -21,6 +24,7 @@ let view = new Date();
 view.setDate(1);
 let selectedKey = null;
 let selectedMood = null;
+let justSaved = null; // день, который нужно «подбросить» после сохранения
 
 // ===== Хранилище (localStorage в браузере) =====
 function load() {
@@ -71,22 +75,55 @@ function streak() {
   return count;
 }
 
+// ===== Анимация чисел: плавно «докручивает» от старого значения к новому =====
+function animateNumber(el, to) {
+  const from = Number(el.textContent) || 0;
+  if (from === to) return;
+  const duration = 500;
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 // ===== Отрисовка календаря =====
-function renderCalendar() {
+// dir: -1 (листаем назад), 1 (вперёд), 0 (без анимации появления)
+function renderCalendar(dir = 0) {
   const year = view.getFullYear();
   const month = view.getMonth();
   const todayKey = keyOf(new Date());
 
-  $('monthLabel').textContent = MONTHS[month];
+  const title = $('monthLabel');
+  if (title.textContent !== MONTHS[month]) {
+    title.textContent = MONTHS[month];
+    title.classList.remove('swap');
+    void title.offsetWidth; // перезапуск анимации
+    title.classList.add('swap');
+  }
   $('yearLabel').textContent = year;
   grid.innerHTML = '';
+
+  // Анимация «волны» дней при смене месяца
+  grid.classList.remove('enter');
+  if (dir !== 0) {
+    grid.style.setProperty('--dir', dir);
+    void grid.offsetWidth;
+    grid.classList.add('enter');
+  }
 
   // Сдвиг, чтобы неделя начиналась с понедельника
   const offset = (new Date(year, month, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   for (let i = 0; i < offset; i++) {
-    grid.appendChild(document.createElement('span'));
+    const blank = document.createElement('span');
+    blank.className = 'blank';
+    blank.style.setProperty('--i', i);
+    grid.appendChild(blank);
   }
 
   let monthCount = 0;
@@ -95,7 +132,8 @@ function renderCalendar() {
     const entry = entries[key];
 
     const btn = document.createElement('button');
-    btn.className = 'day';
+    btn.className = 'day tap';
+    btn.style.setProperty('--i', offset + day);
     btn.setAttribute('aria-label', prettyDate(key));
 
     const num = document.createElement('span');
@@ -121,12 +159,22 @@ function renderCalendar() {
       monthCount++;
     }
 
+    if (key === justSaved) btn.classList.add('pop');
+
     btn.append(num, mark);
     grid.appendChild(btn);
   }
+  justSaved = null;
 
-  $('monthNum').textContent = monthCount;
-  $('streakNum').textContent = streak();
+  const s = streak();
+  animateNumber($('monthNum'), monthCount);
+  animateNumber($('streakNum'), s);
+  $('streakCard').classList.toggle('hot', s >= 3);
+}
+
+function changeMonth(step) {
+  view.setMonth(view.getMonth() + step);
+  renderCalendar(step);
 }
 
 // ===== Последние записи =====
@@ -144,9 +192,10 @@ function renderRecent() {
     return;
   }
 
-  for (const key of keys) {
+  keys.forEach((key, i) => {
     const entry = entries[key];
     const li = document.createElement('li');
+    li.style.setProperty('--i', i);
     const btn = document.createElement('button');
 
     const mood = document.createElement('span');
@@ -163,21 +212,41 @@ function renderRecent() {
     preview.textContent = entry.text || 'Без текста';
     body.append(date, preview);
 
-    btn.append(mood, body);
+    const chev = document.createElement('span');
+    chev.className = 'chev';
+    chev.textContent = '›';
+
+    btn.append(mood, body, chev);
     btn.addEventListener('click', () => openSheet(key));
     li.appendChild(btn);
     list.appendChild(li);
-  }
+  });
 }
 
-function render() {
-  renderCalendar();
+function render(dir = 0) {
+  renderCalendar(dir);
   renderRecent();
+}
+
+// ===== Уведомление внизу экрана =====
+let toastTimer;
+function toast(text) {
+  const el = $('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+// Лёгкая вибрация на телефонах, где это поддерживается (Android)
+function buzz(ms = 8) {
+  if (navigator.vibrate) navigator.vibrate(ms);
 }
 
 // ===== Панель записи =====
 function renderMoods() {
   moodsBox.innerHTML = '';
+  moodsBox.classList.toggle('has-choice', selectedMood != null);
   MOODS.forEach((emoji, i) => {
     const b = document.createElement('button');
     b.textContent = emoji;
@@ -186,6 +255,7 @@ function renderMoods() {
     b.addEventListener('click', () => {
       // Повторное нажатие снимает выбор
       selectedMood = selectedMood === i ? null : i;
+      buzz();
       renderMoods();
     });
     moodsBox.appendChild(b);
@@ -200,14 +270,19 @@ function openSheet(key) {
   $('sheetTitle').textContent = prettyDate(key);
   $('deleteBtn').hidden = !entry;
   renderMoods();
+  sheet.style.setProperty('--drag', '0px');
   sheet.classList.add('open');
   backdrop.classList.add('open');
-  setTimeout(() => entryText.focus(), 300);
+  document.body.classList.add('sheet-open');
+  setTimeout(() => entryText.focus({ preventScroll: true }), 400);
 }
 
 function closeSheet() {
   sheet.classList.remove('open');
   backdrop.classList.remove('open');
+  document.body.classList.remove('sheet-open');
+  sheet.style.setProperty('--drag', '0px');
+  entryText.blur();
   selectedKey = null;
 }
 
@@ -217,10 +292,13 @@ function saveEntry() {
     delete entries[selectedKey]; // пустая запись = удалить
   } else {
     entries[selectedKey] = { text, mood: selectedMood, updatedAt: Date.now() };
+    justSaved = selectedKey;
   }
   save();
   closeSheet();
   render();
+  buzz(15);
+  toast('Сохранено');
 }
 
 function deleteEntry() {
@@ -228,29 +306,90 @@ function deleteEntry() {
   save();
   closeSheet();
   render();
+  toast('Запись удалена');
 }
 
+// ===== Свайп по календарю: влево — следующий месяц, вправо — предыдущий =====
+const calendar = $('calendar');
+let swipeStart = null;
+let swiped = false;
+
+calendar.addEventListener('pointerdown', (e) => {
+  swipeStart = { x: e.clientX, y: e.clientY };
+  swiped = false;
+});
+calendar.addEventListener('pointerup', (e) => {
+  if (!swipeStart) return;
+  const dx = e.clientX - swipeStart.x;
+  const dy = e.clientY - swipeStart.y;
+  swipeStart = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    swiped = true;
+    buzz();
+    changeMonth(dx < 0 ? 1 : -1);
+  }
+});
+calendar.addEventListener('pointercancel', () => { swipeStart = null; });
+// Если это был свайп, не открываем день, на котором отпустили палец
+calendar.addEventListener('click', (e) => {
+  if (swiped) {
+    e.stopPropagation();
+    e.preventDefault();
+    swiped = false;
+  }
+}, true);
+
+// ===== Панель можно потянуть вниз, чтобы закрыть =====
+const dragZone = $('dragZone');
+let dragStartY = null;
+let dragDy = 0;
+
+dragZone.addEventListener('pointerdown', (e) => {
+  dragStartY = e.clientY;
+  dragDy = 0;
+  sheet.classList.add('dragging');
+  dragZone.setPointerCapture(e.pointerId);
+});
+dragZone.addEventListener('pointermove', (e) => {
+  if (dragStartY == null) return;
+  const dy = e.clientY - dragStartY;
+  // Вверх тянется туго (как резинка), вниз — свободно
+  dragDy = dy > 0 ? dy : dy / 4;
+  sheet.style.setProperty('--drag', dragDy + 'px');
+});
+function endDrag() {
+  if (dragStartY == null) return;
+  dragStartY = null;
+  sheet.classList.remove('dragging');
+  if (dragDy > 110) closeSheet();
+  else sheet.style.setProperty('--drag', '0px');
+}
+dragZone.addEventListener('pointerup', endDrag);
+dragZone.addEventListener('pointercancel', endDrag);
+
 // ===== События =====
-$('prevBtn').addEventListener('click', () => {
-  view.setMonth(view.getMonth() - 1);
-  renderCalendar();
-});
-$('nextBtn').addEventListener('click', () => {
-  view.setMonth(view.getMonth() + 1);
-  renderCalendar();
-});
+$('prevBtn').addEventListener('click', () => changeMonth(-1));
+$('nextBtn').addEventListener('click', () => changeMonth(1));
 $('todayBtn').addEventListener('click', () => {
-  view = new Date();
+  const now = new Date();
+  const dir = Math.sign((now.getFullYear() - view.getFullYear()) * 12 + now.getMonth() - view.getMonth());
+  view = now;
   view.setDate(1);
-  renderCalendar();
+  renderCalendar(dir);
 });
 $('saveBtn').addEventListener('click', saveEntry);
 $('cancelBtn').addEventListener('click', closeSheet);
 $('deleteBtn').addEventListener('click', deleteEntry);
 backdrop.addEventListener('click', closeSheet);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && selectedKey) closeSheet();
+  if (!selectedKey) {
+    if (e.key === 'ArrowLeft') changeMonth(-1);
+    if (e.key === 'ArrowRight') changeMonth(1);
+    return;
+  }
+  if (e.key === 'Escape') closeSheet();
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveEntry();
 });
 
-// ===== Старт =====
-render();
+// ===== Старт: при загрузке дни появляются волной =====
+render(1);
