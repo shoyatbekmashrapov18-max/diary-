@@ -2,71 +2,188 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Мой дневник</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <!-- Шапка: месяц, год и переключение -->
-    <header class="top">
-      <div>
-        <p class="eyebrow" id="yearLabel"></p>
-        <h1 id="monthLabel"></h1>
+  <!-- Живой фон: плавающие цветные пятна + зерно -->
+  <div class="bg" aria-hidden="true">
+    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    <div class="grain"></div>
+  </div>
+  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+
+  <main class="shell">
+    <!-- Верхняя панель -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">✦</span>
+        <div>
+          <h1>Мой дневник</h1>
+          <p id="greeting"></p>
+        </div>
       </div>
-      <div class="nav">
-        <button class="icon-btn tap" id="prevBtn" aria-label="Предыдущий месяц">‹</button>
-        <button class="text-btn tap" id="todayBtn">Сегодня</button>
-        <button class="icon-btn tap" id="nextBtn" aria-label="Следующий месяц">›</button>
+      <div class="top-actions">
+        <label class="search">
+          <span class="search-ico">⌕</span>
+          <input id="searchInput" type="search" placeholder="Поиск по записям…" aria-label="Поиск по записям">
+          <kbd>/</kbd>
+        </label>
+        <button class="chip-btn ripple" id="exportBtn" title="Скачать резервную копию">↓ Экспорт</button>
+        <button class="chip-btn ripple" id="importBtn" title="Загрузить резервную копию">↑ Импорт</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+        <button class="icon-btn ripple" id="themeBtn" aria-label="Сменить тему">◐</button>
       </div>
     </header>
 
-    <!-- Счётчики -->
-    <section class="stats">
-      <div class="stat tap" id="streakCard">
-        <span class="stat-num"><span id="streakNum">0</span> <span class="fire">🔥</span></span>
-        <span class="stat-label">дней подряд</span>
-      </div>
-      <div class="stat tap">
-        <span class="stat-num" id="monthNum">0</span>
-        <span class="stat-label">записей в этом месяце</span>
-      </div>
+    <section class="bento">
+      <!-- Часы -->
+      <article class="w w-clock" data-tilt style="--d:1">
+        <header class="w-head">
+          <h2>Сейчас</h2>
+          <span class="pill"><span class="live-dot"></span><span id="tzLabel"></span></span>
+        </header>
+        <div class="clock-body">
+          <div class="digital">
+            <div class="time" id="time"></div>
+            <p class="date" id="dateLabel"></p>
+            <div class="progress-row"><span>День</span><div class="bar"><i id="dayBar"></i></div><b id="dayPct"></b></div>
+            <div class="progress-row"><span>Месяц</span><div class="bar"><i id="monthBar"></i></div><b id="monthPct"></b></div>
+            <div class="progress-row"><span>Год</span><div class="bar"><i id="yearBar"></i></div><b id="yearPct"></b></div>
+          </div>
+          <svg class="analog" viewBox="0 0 200 200" aria-hidden="true">
+            <defs>
+              <linearGradient id="faceGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" style="stop-color:var(--accent)" stop-opacity="0.25"/>
+                <stop offset="1" style="stop-color:var(--accent-2)" stop-opacity="0.05"/>
+              </linearGradient>
+            </defs>
+            <circle class="face" cx="100" cy="100" r="96"/>
+            <circle class="sec-ring" id="secRing" cx="100" cy="100" r="96" pathLength="60"/>
+            <g id="ticks"></g>
+            <line class="hand hour" id="hourHand" x1="100" y1="100" x2="100" y2="54"/>
+            <line class="hand min" id="minHand" x1="100" y1="100" x2="100" y2="30"/>
+            <line class="hand sec" id="secHand" x1="100" y1="116" x2="100" y2="20"/>
+            <circle class="pin" cx="100" cy="100" r="4.5"/>
+          </svg>
+        </div>
+      </article>
+
+      <!-- Статистика -->
+      <article class="w w-stats" data-tilt style="--d:2">
+        <header class="w-head"><h2>Статистика</h2></header>
+        <div class="stat-grid">
+          <div class="stat" id="streakCard">
+            <b><span id="streakNum">0</span><span class="fire">🔥</span></b>
+            <span>дней подряд</span>
+          </div>
+          <div class="stat"><b id="monthNum">0</b><span>записей за месяц</span></div>
+          <div class="stat"><b id="avgMood">—</b><span>настроение за 30 дней</span></div>
+          <div class="stat"><b id="weekEvents">0</b><span>встреч на 7 дней</span></div>
+        </div>
+      </article>
+
+      <!-- Ближайшие встречи -->
+      <article class="w w-upcoming" style="--d:3">
+        <header class="w-head">
+          <h2>Ближайшие встречи</h2>
+          <span class="pill" id="upcomingCount"></span>
+        </header>
+        <ul class="up-list" id="upcomingList"></ul>
+      </article>
+
+      <!-- Календарь -->
+      <article class="w w-cal" style="--d:4">
+        <header class="w-head cal-head">
+          <div>
+            <p class="eyebrow" id="yearLabel"></p>
+            <h2 class="month" id="monthLabel"></h2>
+          </div>
+          <div class="nav">
+            <button class="icon-btn ripple" id="prevBtn" aria-label="Предыдущий месяц">‹</button>
+            <button class="chip-btn ripple" id="todayBtn">Сегодня</button>
+            <button class="icon-btn ripple" id="nextBtn" aria-label="Следующий месяц">›</button>
+          </div>
+        </header>
+        <div class="weekdays">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span class="we">Сб</span><span class="we">Вс</span>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="legend">
+          <span><i class="legend-dot"></i>встреча</span>
+          <span>🙂 настроение</span>
+          <span class="keys"><kbd>←</kbd><kbd>→</kbd> месяцы · <kbd>T</kbd> сегодня</span>
+        </div>
+      </article>
+
+      <!-- Выбранный день: запись + встречи -->
+      <article class="w w-day" style="--d:5">
+        <header class="w-head">
+          <div>
+            <p class="eyebrow" id="dayWeekday"></p>
+            <h2 class="day-title" id="dayTitle"></h2>
+          </div>
+          <span class="pill accent" id="dayBadge"></span>
+        </header>
+        <div class="day-cols">
+          <div class="day-entry">
+            <p class="label">Настроение</p>
+            <div class="moods" id="moods"></div>
+            <p class="label">Запись <span class="save-state" id="saveState"></span></p>
+            <textarea id="entryText" placeholder="Что сегодня было? Мысли, события, мелочи…"></textarea>
+            <div class="entry-foot">
+              <span class="muted" id="charCount"></span>
+              <button class="link-btn danger" id="deleteBtn">Удалить запись</button>
+            </div>
+          </div>
+          <div class="day-events">
+            <p class="label">Встречи и дела</p>
+            <ul class="ev-list" id="eventList"></ul>
+            <form class="ev-form" id="eventForm" autocomplete="off">
+              <div class="ev-row">
+                <input type="time" id="evTime" required aria-label="Начало">
+                <span class="muted">—</span>
+                <input type="time" id="evEnd" aria-label="Конец (необязательно)">
+              </div>
+              <input type="text" id="evTitle" placeholder="Название встречи" maxlength="80" required>
+              <div class="ev-row">
+                <div class="colors" id="colorPick" role="radiogroup" aria-label="Цвет"></div>
+                <button class="btn primary ripple" type="submit">＋ Добавить</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </article>
+
+      <!-- График настроения -->
+      <article class="w w-chart" style="--d:6">
+        <header class="w-head">
+          <h2>Настроение за 30 дней</h2>
+          <span class="pill" id="chartSummary"></span>
+        </header>
+        <div class="chart-wrap" id="chartWrap">
+          <svg id="chart" aria-label="График настроения"></svg>
+          <div class="tip" id="chartTip"></div>
+        </div>
+      </article>
+
+      <!-- Последние записи / поиск -->
+      <article class="w w-recent" style="--d:7">
+        <header class="w-head">
+          <h2 id="recentTitle">Последние записи</h2>
+          <span class="pill" id="recentCount"></span>
+        </header>
+        <ul class="rec-list" id="recentList"></ul>
+      </article>
     </section>
 
-    <!-- Календарь -->
-    <section class="card calendar" id="calendar">
-      <div class="weekdays">
-        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-      </div>
-      <div class="grid" id="grid"></div>
-      <p class="hint">Смахните влево или вправо, чтобы сменить месяц</p>
-    </section>
-
-    <!-- Последние записи -->
-    <section class="recent">
-      <h2>Последние записи</h2>
-      <ul class="card list" id="recentList"></ul>
-    </section>
+    <footer class="foot">Всё хранится в этом браузере · делайте «Экспорт», чтобы не потерять записи</footer>
   </main>
 
-  <!-- Нижняя панель (как sheet в iOS) для записи дня -->
-  <div class="backdrop" id="backdrop"></div>
-  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-    <div class="drag-zone" id="dragZone"><div class="grabber"></div></div>
-    <header class="sheet-head">
-      <button class="text-btn tap" id="cancelBtn">Отмена</button>
-      <h3 id="sheetTitle"></h3>
-      <button class="text-btn bold tap" id="saveBtn">Готово</button>
-    </header>
-    <p class="sheet-label">Настроение</p>
-    <div class="moods" id="moods"></div>
-    <textarea id="entryText" placeholder="Что сегодня было?"></textarea>
-    <button class="delete-btn tap" id="deleteBtn">Удалить запись</button>
-  </div>
-
-  <!-- Уведомление -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="app.js"></script>
