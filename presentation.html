@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Другая сторона — Презентация</title>
+  <title>Новый продукт — Презентация</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=IBM+Plex+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
@@ -21,9 +21,9 @@
       animation: drift 12s linear infinite;
     }
     @keyframes drift { from { transform: scale(1); } to { transform: scale(1.6) rotate(20deg); } }
-    .panel { position: relative; max-width: 980px; width: 100%; border: 2px solid var(--border); background: rgba(11,19,34,0.85); box-shadow: 8px 8px 0 #000; padding: 48px; animation: rise 0.9s var(--ease-out) 0.6s both; }
+    .panel { position: relative; max-width: 980px; width: 100%; border: 2px solid var(--border); border-radius: var(--r-lg); background: rgba(11,19,34,0.85); box-shadow: 8px 8px 0 #000; padding: 48px; animation: rise 0.9s var(--ease-out) 0.6s both; }
     .panel .hero-index { color: var(--muted); }
-    .panel h1 { font-family: var(--head); text-transform: uppercase; font-size: clamp(56px, 9vw, 140px); line-height: 0.85; margin: 18px 0; }
+    .panel h1 { font-family: var(--head); text-transform: uppercase; font-size: clamp(56px, 9vw, 140px); line-height: 0.85; margin: 0 0 36px; }
     .panel h1 span { display: block; animation: slab 0.9s var(--snap) both; animation-delay: 0.9s; }
     .panel h1 span + span { -webkit-text-stroke: 2px var(--text); color: transparent; margin-left: 0.5em; animation-delay: 1.02s; }
     .panel .lead { font-family: var(--serif); font-style: italic; font-size: 26px; color: #9aa7b8; max-width: 30ch; margin: 0 0 32px; }
@@ -39,11 +39,9 @@
   <main class="stage">
     <div class="tunnel" aria-hidden="true"></div>
     <section class="panel">
-      <p class="hero-index">№ 002 · ДРУГАЯ СТОРОНА</p>
       <h1><span>Новый</span><span>продукт</span></h1>
-      <p class="lead">Здесь скоро будет презентация. Пока — тишина перед запуском.</p>
       <div class="row">
-        <a class="chip-btn" href="index.html">← Назад в кабинет</a>
+        <a class="chip-btn" href="index.html">← Назад</a>
         <span class="soon">Статус: в разработке <b>▌</b></span>
       </div>
     </section>

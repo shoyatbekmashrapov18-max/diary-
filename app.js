@@ -165,12 +165,6 @@ function setBar(id, pctId, value) {
   $(pctId).textContent = `${Math.floor(value * 100)}%`;
 }
 
-function greetingFor(h) {
-  if (h < 5) return 'Доброй ночи';
-  if (h < 12) return 'Доброе утро';
-  if (h < 18) return 'Добрый день';
-  return 'Добрый вечер';
-}
 
 let lastMinute = -1;
 function tick() {
@@ -192,7 +186,7 @@ function tick() {
     const yStart = new Date(now.getFullYear(), 0, 1);
     const yEnd = new Date(now.getFullYear() + 1, 0, 1);
     setBar('yearBar', 'yearPct', (now - yStart) / (yEnd - yStart));
-    $('greeting').textContent = `${greetingFor(now.getHours())}! Как проходит день?`;
+    renderMarquee();
 
     // Наступила полночь — переключаемся на новый день
     if (todayKey() !== lastDayKey) {
@@ -223,6 +217,30 @@ function animateHands() {
 try {
   $('tzLabel').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone.split('/').pop().replace(/_/g, ' ');
 } catch { /* без пояса */ }
+
+// ===== Бегущая строка: сводка на сегодня =====
+function renderMarquee() {
+  const now = new Date();
+  const tKey = todayKey();
+  const next = events
+    .filter((e) => !e.done && eventEnd(e) > now)
+    .sort((a, b) => eventStart(a) - eventStart(b))[0];
+  const todayEvents = eventsOn(tKey).filter((e) => !e.done).length;
+  const items = [
+    `${WEEKDAYS[now.getDay()]}, ${now.getDate()} ${MONTHS_GEN[now.getMonth()]}`,
+    entries[tKey] ? 'Запись за сегодня есть' : 'Записи за сегодня нет',
+    `Встреч сегодня: ${todayEvents}`,
+    next ? `Следующая: ${next.title} — ${relativeWhen(next, now)}` : 'Встреч впереди нет',
+    `Серия: ${streak()} дн.`,
+    `Всего записей: ${Object.keys(entries).length}`,
+  ];
+  const track = $('marquee');
+  track.innerHTML = '';
+  // Два одинаковых набора — чтобы прокрутка шла без шва
+  for (let k = 0; k < 2; k++) {
+    items.forEach((t) => track.append(el('span', '', t.toUpperCase()), el('span', 'sep', '◆')));
+  }
+}
 
 // ===== Статистика =====
 function streak() {
@@ -259,6 +277,7 @@ function renderStats() {
     avgEl.textContent = '—';
   }
 
+  renderMarquee();
   $('heroTotal').textContent = Object.keys(entries).length;
   $('heroStreak').textContent = s;
   const td = new Date();
@@ -295,7 +314,7 @@ function renderUpcoming() {
 
   if (!upcoming.length) {
     const li = el('li', 'empty');
-    li.append(el('b', '', '☕'), 'Встреч не запланировано. Выберите день в календаре и добавьте встречу.');
+    li.append('Нет встреч');
     list.appendChild(li);
     return;
   }
@@ -432,9 +451,7 @@ function renderDay(animate = false) {
   const entry = entries[selected];
   entryText.value = entry?.text || '';
   entryText.disabled = isFuture;
-  entryText.placeholder = isFuture
-    ? 'Этот день ещё не наступил — запись можно будет сделать потом. А вот встречи добавлять можно уже сейчас →'
-    : 'Что сегодня было? Мысли, события, мелочи…';
+  entryText.placeholder = isFuture ? 'Запись недоступна: день не наступил' : 'Запись дня';
   $('deleteBtn').hidden = !entry;
   updateCharCount();
   $('saveState').classList.remove('show');
@@ -531,7 +548,7 @@ function renderDayEvents() {
 
   if (!dayEvents.length) {
     const li = el('li', 'empty');
-    li.append(el('b', '', '🗓️'), 'На этот день ничего нет');
+    li.append('Нет встреч на этот день');
     list.appendChild(li);
     return;
   }
@@ -701,7 +718,7 @@ function renderChart() {
   }
 
   if (chartPoints.length < 2) {
-    const empty = el('div', 'chart-empty', 'Отмечайте настроение хотя бы пару дней — здесь появится график 📈');
+    const empty = el('div', 'chart-empty', 'Нужно настроение минимум за 2 дня');
     wrap.appendChild(empty);
     return;
   }
@@ -800,7 +817,7 @@ function renderRecent() {
 
   if (!keys.length) {
     const li = el('li', 'empty');
-    li.append(el('b', '', q ? '🔍' : '✍️'), q ? 'Ничего не нашлось' : 'Пока пусто. Выберите сегодняшний день и напишите первую запись.');
+    li.append(q ? 'Ничего не найдено' : 'Нет записей');
     list.appendChild(li);
     return;
   }
@@ -938,9 +955,6 @@ document.addEventListener('pointermove', (e) => {
   heroImg.style.setProperty('--py', `${((e.clientY / innerHeight) - 0.5) * -12}px`);
 });
 
-// Бегущая строка: дублируем содержимое, чтобы цикл был бесшовным
-const marquee = $('marquee');
-marquee.innerHTML += marquee.innerHTML;
 
 // Портал: камера влетает в коридор внутри статуи, вспышка — и переход
 $('portalBtn').addEventListener('click', (e) => {

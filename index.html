@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Дневник — Кабинет</title>
+  <title>Дневник</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=IBM+Plex+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
@@ -19,10 +19,10 @@
     <!-- Верхняя панель -->
     <header class="topbar">
       <div class="brand">
-        <span class="logo">W</span>
+        <span class="logo">Д</span>
         <div>
-          <h1>Кабинет / Дневник</h1>
-          <p id="greeting"></p>
+          <h1>Дневник</h1>
+          <p>Записи · встречи · настроение</p>
         </div>
       </div>
       <div class="top-actions">
@@ -42,12 +42,9 @@
     <section class="hero">
       <figure class="hero-img">
         <img src="img/statue.jpg" alt="Мраморная статуя с коридором внутри" id="heroImg">
-        <figcaption>FIG. 00 — АРХИВ / МРАМОР</figcaption>
       </figure>
       <div class="hero-text">
-        <p class="hero-index">№ 001 · ЛИЧНЫЙ АРХИВ</p>
         <h2 class="hero-title"><span>Днев</span><span>ник</span></h2>
-        <blockquote class="hero-quote">«Важно не то, кто ты внутри, а то, что ты делаешь».</blockquote>
         <dl class="hero-meta">
           <div><dt>Записей</dt><dd id="heroTotal">0</dd></div>
           <div><dt>Серия</dt><dd id="heroStreak">0</dd></div>
@@ -56,10 +53,9 @@
       </div>
     </section>
 
-    <!-- Бегущая строка -->
+    <!-- Бегущая строка: сводка на сегодня (заполняется из app.js) -->
     <div class="marquee" aria-hidden="true">
       <div class="marquee-track" id="marquee">
-        <span>ДИСЦИПЛИНА</span><span>◆</span><span>ТИШИНА</span><span>◆</span><span>КНИГИ</span><span>◆</span><span>НОЧНОЙ ГОРОД</span><span>◆</span><span>ПЛАН</span><span>◆</span><span>ПАМЯТЬ</span><span>◆</span>
       </div>
     </div>
 
@@ -151,7 +147,7 @@
             <p class="label">Настроение</p>
             <div class="moods" id="moods"></div>
             <p class="label">Запись <span class="save-state" id="saveState"></span></p>
-            <textarea id="entryText" placeholder="Что сегодня было?"></textarea>
+            <textarea id="entryText" placeholder="Запись дня"></textarea>
             <div class="entry-foot">
               <span class="muted" id="charCount"></span>
               <button class="link-btn danger" id="deleteBtn">Удалить запись</button>
@@ -179,7 +175,6 @@
       <!-- Фото: кабинет -->
       <figure class="w w-photo photo-a" style="--d:6">
         <img src="img/chair.jpg" alt="Кожаное кресло и стопки книг" loading="lazy">
-        <figcaption><b>FIG. 01</b> Кабинет. Кресло, книги, тишина.</figcaption>
       </figure>
 
       <!-- График настроения -->
@@ -197,7 +192,6 @@
       <!-- Фото: комната -->
       <figure class="w w-photo photo-b" style="--d:8">
         <img src="img/room.jpg" alt="Кровать с синим бельём, книги и ноутбук" loading="lazy">
-        <figcaption><b>FIG. 02</b> Утро. Чертежи и кофе.</figcaption>
       </figure>
 
       <!-- Последние записи -->
@@ -210,20 +204,19 @@
       </article>
     </section>
 
-    <!-- Портал в другую сторону -->
+    <!-- Переход на страницу презентации -->
     <section class="portal-block">
       <div class="portal-copy">
-        <p class="hero-index">№ 002 · ДРУГАЯ СТОРОНА</p>
         <h2>Новый продукт</h2>
-        <p>За этой дверью — презентация. Скоро здесь будет то, над чем мы работаем.</p>
+        <p>Презентация — в разработке.</p>
       </div>
       <a class="portal-btn" id="portalBtn" href="presentation.html">
         <span class="portal-ring"></span><span class="portal-ring r2"></span><span class="portal-ring r3"></span>
-        <span class="portal-label">Войти →</span>
+        <span class="portal-label">Открыть →</span>
       </a>
     </section>
 
-    <footer class="foot">Всё хранится в этом браузере · делайте «Экспорт», чтобы не потерять записи</footer>
+    <footer class="foot">Данные хранятся в этом браузере · резервная копия — «Экспорт»</footer>
   </main>
 
   <!-- Слой анимации портала -->
