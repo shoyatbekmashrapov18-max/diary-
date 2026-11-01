@@ -939,21 +939,29 @@ widgets.forEach((w) => {
 // Координаты курсора в углу + лёгкий параллакс главного фото
 const coords = $('coords');
 const heroImg = $('heroImg');
+// Движение мыши обрабатываем не чаще раза за кадр
+let lastMove = null;
+let moveQueued = false;
 document.addEventListener('pointermove', (e) => {
   if (e.pointerType !== 'mouse') return;
-  coords.textContent = `X ${String(Math.round(e.clientX)).padStart(4, '0')} · Y ${String(Math.round(e.clientY + scrollY)).padStart(4, '0')}`;
-  const w = e.target.closest?.('.w');
-  if (w) {
-    const wr = w.getBoundingClientRect();
-    w.style.setProperty('--mx', `${e.clientX - wr.left}px`);
-    w.style.setProperty('--my', `${e.clientY - wr.top}px`);
-  }
-  if (reduceMotion) return;
-  const r = heroImg.parentElement.getBoundingClientRect();
-  if (e.clientY > r.bottom + 200) return;
-  heroImg.style.setProperty('--px', `${((e.clientX / innerWidth) - 0.5) * -18}px`);
-  heroImg.style.setProperty('--py', `${((e.clientY / innerHeight) - 0.5) * -12}px`);
-});
+  lastMove = e;
+  if (moveQueued) return;
+  moveQueued = true;
+  requestAnimationFrame(() => {
+    moveQueued = false;
+    const ev = lastMove;
+    coords.textContent = `X ${String(Math.round(ev.clientX)).padStart(4, '0')} · Y ${String(Math.round(ev.clientY + scrollY)).padStart(4, '0')}`;
+    const w = ev.target.closest?.('.w');
+    if (w) {
+      const wr = w.getBoundingClientRect();
+      w.style.setProperty('--mx', `${ev.clientX - wr.left}px`);
+      w.style.setProperty('--my', `${ev.clientY - wr.top}px`);
+    }
+    if (reduceMotion || scrollY > 700) return;
+    heroImg.style.setProperty('--px', `${((ev.clientX / innerWidth) - 0.5) * -18}px`);
+    heroImg.style.setProperty('--py', `${((ev.clientY / innerHeight) - 0.5) * -12}px`);
+  });
+}, { passive: true });
 
 
 // Портал: камера влетает в коридор внутри статуи, вспышка — и переход
