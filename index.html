@@ -3,48 +3,71 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Мой дневник</title>
+  <title>Дневник — Кабинет</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=IBM+Plex+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Живой фон: плавающие цветные пятна + зерно -->
-  <div class="bg" aria-hidden="true">
-    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
-    <div class="grain"></div>
-  </div>
-  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+  <!-- Бетонный фон: сетка + зерно -->
+  <div class="bg" aria-hidden="true"><div class="grain"></div></div>
+  <!-- Координаты курсора в углу, как на чертеже -->
+  <div class="coords" id="coords" aria-hidden="true">X 0000 · Y 0000</div>
 
   <main class="shell">
     <!-- Верхняя панель -->
     <header class="topbar">
       <div class="brand">
-        <span class="logo">✦</span>
+        <span class="logo">W</span>
         <div>
-          <h1>Мой дневник</h1>
+          <h1>Кабинет / Дневник</h1>
           <p id="greeting"></p>
         </div>
       </div>
       <div class="top-actions">
         <label class="search">
           <span class="search-ico">⌕</span>
-          <input id="searchInput" type="search" placeholder="Поиск по записям…" aria-label="Поиск по записям">
+          <input id="searchInput" type="search" placeholder="Поиск по записям" aria-label="Поиск по записям">
           <kbd>/</kbd>
         </label>
-        <button class="chip-btn ripple" id="exportBtn" title="Скачать резервную копию">↓ Экспорт</button>
-        <button class="chip-btn ripple" id="importBtn" title="Загрузить резервную копию">↑ Импорт</button>
+        <button class="chip-btn ripple" id="exportBtn" title="Скачать резервную копию">Экспорт</button>
+        <button class="chip-btn ripple" id="importBtn" title="Загрузить резервную копию">Импорт</button>
         <input type="file" id="importFile" accept="application/json,.json" hidden>
         <button class="icon-btn ripple" id="themeBtn" aria-label="Сменить тему">◐</button>
       </div>
     </header>
 
+    <!-- Главный баннер -->
+    <section class="hero">
+      <figure class="hero-img">
+        <img src="img/statue.jpg" alt="Мраморная статуя с коридором внутри" id="heroImg">
+        <figcaption>FIG. 00 — АРХИВ / МРАМОР</figcaption>
+      </figure>
+      <div class="hero-text">
+        <p class="hero-index">№ 001 · ЛИЧНЫЙ АРХИВ</p>
+        <h2 class="hero-title"><span>Днев</span><span>ник</span></h2>
+        <blockquote class="hero-quote">«Важно не то, кто ты внутри, а то, что ты делаешь».</blockquote>
+        <dl class="hero-meta">
+          <div><dt>Записей</dt><dd id="heroTotal">0</dd></div>
+          <div><dt>Серия</dt><dd id="heroStreak">0</dd></div>
+          <div><dt>Сегодня</dt><dd id="heroDate">—</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Бегущая строка -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track" id="marquee">
+        <span>ДИСЦИПЛИНА</span><span>◆</span><span>ТИШИНА</span><span>◆</span><span>КНИГИ</span><span>◆</span><span>НОЧНОЙ ГОРОД</span><span>◆</span><span>ПЛАН</span><span>◆</span><span>ПАМЯТЬ</span><span>◆</span>
+      </div>
+    </div>
+
     <section class="bento">
       <!-- Часы -->
-      <article class="w w-clock" data-tilt style="--d:1">
+      <article class="w w-clock" style="--d:1">
         <header class="w-head">
-          <h2>Сейчас</h2>
+          <h2><i>01</i>Время</h2>
           <span class="pill"><span class="live-dot"></span><span id="tzLabel"></span></span>
         </header>
         <div class="clock-body">
@@ -56,33 +79,27 @@
             <div class="progress-row"><span>Год</span><div class="bar"><i id="yearBar"></i></div><b id="yearPct"></b></div>
           </div>
           <svg class="analog" viewBox="0 0 200 200" aria-hidden="true">
-            <defs>
-              <linearGradient id="faceGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" style="stop-color:var(--accent)" stop-opacity="0.25"/>
-                <stop offset="1" style="stop-color:var(--accent-2)" stop-opacity="0.05"/>
-              </linearGradient>
-            </defs>
             <circle class="face" cx="100" cy="100" r="96"/>
             <circle class="sec-ring" id="secRing" cx="100" cy="100" r="96" pathLength="60"/>
             <g id="ticks"></g>
             <line class="hand hour" id="hourHand" x1="100" y1="100" x2="100" y2="54"/>
             <line class="hand min" id="minHand" x1="100" y1="100" x2="100" y2="30"/>
             <line class="hand sec" id="secHand" x1="100" y1="116" x2="100" y2="20"/>
-            <circle class="pin" cx="100" cy="100" r="4.5"/>
+            <rect class="pin" x="95" y="95" width="10" height="10"/>
           </svg>
         </div>
       </article>
 
       <!-- Статистика -->
-      <article class="w w-stats" data-tilt style="--d:2">
-        <header class="w-head"><h2>Статистика</h2></header>
+      <article class="w w-stats" style="--d:2">
+        <header class="w-head"><h2><i>02</i>Статистика</h2></header>
         <div class="stat-grid">
           <div class="stat" id="streakCard">
-            <b><span id="streakNum">0</span><span class="fire">🔥</span></b>
+            <b><span id="streakNum">0</span><span class="fire">▲</span></b>
             <span>дней подряд</span>
           </div>
           <div class="stat"><b id="monthNum">0</b><span>записей за месяц</span></div>
-          <div class="stat"><b id="avgMood">—</b><span>настроение за 30 дней</span></div>
+          <div class="stat"><b id="avgMood">—</b><span>настроение, 30 дней</span></div>
           <div class="stat"><b id="weekEvents">0</b><span>встреч на 7 дней</span></div>
         </div>
       </article>
@@ -90,7 +107,7 @@
       <!-- Ближайшие встречи -->
       <article class="w w-upcoming" style="--d:3">
         <header class="w-head">
-          <h2>Ближайшие встречи</h2>
+          <h2><i>03</i>Ближайшие встречи</h2>
           <span class="pill" id="upcomingCount"></span>
         </header>
         <ul class="up-list" id="upcomingList"></ul>
@@ -104,9 +121,9 @@
             <h2 class="month" id="monthLabel"></h2>
           </div>
           <div class="nav">
-            <button class="icon-btn ripple" id="prevBtn" aria-label="Предыдущий месяц">‹</button>
+            <button class="icon-btn ripple" id="prevBtn" aria-label="Предыдущий месяц">←</button>
             <button class="chip-btn ripple" id="todayBtn">Сегодня</button>
-            <button class="icon-btn ripple" id="nextBtn" aria-label="Следующий месяц">›</button>
+            <button class="icon-btn ripple" id="nextBtn" aria-label="Следующий месяц">→</button>
           </div>
         </header>
         <div class="weekdays">
@@ -120,7 +137,7 @@
         </div>
       </article>
 
-      <!-- Выбранный день: запись + встречи -->
+      <!-- Выбранный день -->
       <article class="w w-day" style="--d:5">
         <header class="w-head">
           <div>
@@ -134,7 +151,7 @@
             <p class="label">Настроение</p>
             <div class="moods" id="moods"></div>
             <p class="label">Запись <span class="save-state" id="saveState"></span></p>
-            <textarea id="entryText" placeholder="Что сегодня было? Мысли, события, мелочи…"></textarea>
+            <textarea id="entryText" placeholder="Что сегодня было?"></textarea>
             <div class="entry-foot">
               <span class="muted" id="charCount"></span>
               <button class="link-btn danger" id="deleteBtn">Удалить запись</button>
@@ -152,17 +169,23 @@
               <input type="text" id="evTitle" placeholder="Название встречи" maxlength="80" required>
               <div class="ev-row">
                 <div class="colors" id="colorPick" role="radiogroup" aria-label="Цвет"></div>
-                <button class="btn primary ripple" type="submit">＋ Добавить</button>
+                <button class="btn primary ripple" type="submit">+ Добавить</button>
               </div>
             </form>
           </div>
         </div>
       </article>
 
+      <!-- Фото: кабинет -->
+      <figure class="w w-photo photo-a" style="--d:6">
+        <img src="img/chair.jpg" alt="Кожаное кресло и стопки книг" loading="lazy">
+        <figcaption><b>FIG. 01</b> Кабинет. Кресло, книги, тишина.</figcaption>
+      </figure>
+
       <!-- График настроения -->
-      <article class="w w-chart" style="--d:6">
+      <article class="w w-chart" style="--d:7">
         <header class="w-head">
-          <h2>Настроение за 30 дней</h2>
+          <h2><i>04</i>Настроение, 30 дней</h2>
           <span class="pill" id="chartSummary"></span>
         </header>
         <div class="chart-wrap" id="chartWrap">
@@ -171,8 +194,14 @@
         </div>
       </article>
 
-      <!-- Последние записи / поиск -->
-      <article class="w w-recent" style="--d:7">
+      <!-- Фото: комната -->
+      <figure class="w w-photo photo-b" style="--d:8">
+        <img src="img/room.jpg" alt="Кровать с синим бельём, книги и ноутбук" loading="lazy">
+        <figcaption><b>FIG. 02</b> Утро. Чертежи и кофе.</figcaption>
+      </figure>
+
+      <!-- Последние записи -->
+      <article class="w w-recent" style="--d:9">
         <header class="w-head">
           <h2 id="recentTitle">Последние записи</h2>
           <span class="pill" id="recentCount"></span>
@@ -181,8 +210,28 @@
       </article>
     </section>
 
+    <!-- Портал в другую сторону -->
+    <section class="portal-block">
+      <div class="portal-copy">
+        <p class="hero-index">№ 002 · ДРУГАЯ СТОРОНА</p>
+        <h2>Новый продукт</h2>
+        <p>За этой дверью — презентация. Скоро здесь будет то, над чем мы работаем.</p>
+      </div>
+      <a class="portal-btn" id="portalBtn" href="presentation.html">
+        <span class="portal-ring"></span><span class="portal-ring r2"></span><span class="portal-ring r3"></span>
+        <span class="portal-label">Войти →</span>
+      </a>
+    </section>
+
     <footer class="foot">Всё хранится в этом браузере · делайте «Экспорт», чтобы не потерять записи</footer>
   </main>
+
+  <!-- Слой анимации портала -->
+  <div class="portal-overlay" id="portalOverlay" aria-hidden="true">
+    <div class="portal-zoom"><img src="img/statue.jpg" alt=""></div>
+    <div class="portal-tunnel"></div>
+    <div class="portal-flash"></div>
+  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

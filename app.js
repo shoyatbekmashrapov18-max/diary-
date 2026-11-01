@@ -259,6 +259,11 @@ function renderStats() {
     avgEl.textContent = '—';
   }
 
+  $('heroTotal').textContent = Object.keys(entries).length;
+  $('heroStreak').textContent = s;
+  const td = new Date();
+  $('heroDate').textContent = `${pad(td.getDate())}.${pad(td.getMonth() + 1)}`;
+
   const now = new Date();
   const weekLater = new Date(now.getTime() + 7 * 864e5);
   animateNumber($('weekEvents'), events.filter((e) => eventEnd(e) > now && eventStart(e) < weekLater).length);
@@ -914,34 +919,40 @@ const widgets = [...document.querySelectorAll('.w')];
 widgets.forEach((w) => {
   w.addEventListener('animationend', (e) => { if (e.target === w) w.classList.add('ready'); });
 });
-const glow = $('cursorGlow');
-let gx = -999, gy = -999, tx = -999, ty = -999;
+// Координаты курсора в углу + лёгкий параллакс главного фото
+const coords = $('coords');
+const heroImg = $('heroImg');
 document.addEventListener('pointermove', (e) => {
   if (e.pointerType !== 'mouse') return;
-  tx = e.clientX; ty = e.clientY;
+  coords.textContent = `X ${String(Math.round(e.clientX)).padStart(4, '0')} · Y ${String(Math.round(e.clientY + scrollY)).padStart(4, '0')}`;
   const w = e.target.closest?.('.w');
-  if (!w) return;
-  const r = w.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
-  w.style.setProperty('--mx', `${mx}px`);
-  w.style.setProperty('--my', `${my}px`);
-  if (w.hasAttribute('data-tilt') && !reduceMotion) {
-    w.style.setProperty('--ry', `${((mx / r.width) - 0.5) * 5}deg`);
-    w.style.setProperty('--rx', `${(0.5 - (my / r.height)) * 5}deg`);
+  if (w) {
+    const wr = w.getBoundingClientRect();
+    w.style.setProperty('--mx', `${e.clientX - wr.left}px`);
+    w.style.setProperty('--my', `${e.clientY - wr.top}px`);
   }
-});
-document.querySelectorAll('[data-tilt]').forEach((w) => {
-  w.addEventListener('pointerleave', () => { w.style.setProperty('--rx', '0deg'); w.style.setProperty('--ry', '0deg'); });
-});
-(function followGlow() {
   if (reduceMotion) return;
-  if (gx === -999) { gx = tx; gy = ty; }
-  gx += (tx - gx) * 0.12;
-  gy += (ty - gy) * 0.12;
-  glow.style.setProperty('--gx', `${gx}px`);
-  glow.style.setProperty('--gy', `${gy}px`);
-  requestAnimationFrame(followGlow);
-})();
+  const r = heroImg.parentElement.getBoundingClientRect();
+  if (e.clientY > r.bottom + 200) return;
+  heroImg.style.setProperty('--px', `${((e.clientX / innerWidth) - 0.5) * -18}px`);
+  heroImg.style.setProperty('--py', `${((e.clientY / innerHeight) - 0.5) * -12}px`);
+});
+
+// Бегущая строка: дублируем содержимое, чтобы цикл был бесшовным
+const marquee = $('marquee');
+marquee.innerHTML += marquee.innerHTML;
+
+// Портал: камера влетает в коридор внутри статуи, вспышка — и переход
+$('portalBtn').addEventListener('click', (e) => {
+  if (reduceMotion || e.metaKey || e.ctrlKey) return;
+  e.preventDefault();
+  flushEntry();
+  const href = e.currentTarget.href;
+  $('portalOverlay').classList.add('go');
+  setTimeout(() => { location.href = href; }, 2750);
+});
+// Если вернулись кнопкой «назад» — убираем слой портала
+window.addEventListener('pageshow', () => $('portalOverlay').classList.remove('go'));
 
 // ===== Клавиатура =====
 document.addEventListener('keydown', (e) => {
